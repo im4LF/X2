@@ -11,5 +11,9 @@
 				<li><strong>{$i.title}</strong> &mdash; {$i.description}</li>
 			{/foreach}
 		</ul>
+		<form action="/.json" method="post">
+			<input type="text" name="value" value="498"/>
+			<input type="submit" value="send"/>
+		</form>
 	</body>
 </html>

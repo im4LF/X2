@@ -83,11 +83,14 @@ function RS($var = null, $value = null)
 	$__rx['current']['response']->body[$var] = $value;
 }
 
-function RSH($header)
+function RSH($header, $code = '')
 {
 	global $__rx;
 	
-	$__rx['current']['response']->headers[] = $header;
+	$__rx['current']['response']->headers[] = array(
+		'string' => $header,
+		'code' => $code
+	);
 }
 
 function XRedirect($url, $code = 302)
@@ -106,20 +109,6 @@ class XResponse
 	public $headers;
 	public $body;
 	public $view;
-}
-
-function __()
-{
-	$args = func_get_args();
-	$nargs = func_num_args();
-	$trace = debug_backtrace();
-	$caller = array_shift($trace);
-
-	$key = $caller['file'].':'.$caller['line'];
-
-	echo $key."\n";
-	for ($i=0; $i<$nargs; $i++)
-		echo print_r($args[$i], 1)."\n";
 }
 
 /**
@@ -147,7 +136,7 @@ class XURL
 	public $raw;
 	public $path = '/';
 	public $segments = array();
-	public $action = '';
+	public $action = 'index';
 	public $view;
 	public $views = array();
 	
@@ -180,7 +169,7 @@ class XURL
 		}
 		
 		// try to parse url parameters
-		$params_re = '/\/-([\w\-]+)(\/([^\/\:\.]+))?/';
+		$params_re = '/\/-([\w\-]+)(\/([^\/]+))?/';
 		if (preg_match_all($params_re, $this->path, $matches, PREG_SET_ORDER))
 		{
 			foreach ($matches as $param)
@@ -250,8 +239,7 @@ class XAny_Router
 			$action.'_'.$request->method.'_'.$request->url->view,
 			$action.'_'.$request->method,
 			$action.'_x_'.$request->url->view,
-			$action,
-			'action_index'
+			$action
 		);
 	}
 	
@@ -291,6 +279,102 @@ class XException extends Exception
 	{
 		parent::__construct($message, $code);
 	}
+}
+
+$__r = array();
+$__s = array();
+
+/**
+ * Class factory
+ * 
+ * @example F('SomeClass', $param1, ...)->objectMethod(); - create new instance of SomeClass
+ * 
+ * @return object
+ */
+function XF()
+{
+	$args = func_get_args();
+    $class_name = array_shift($args);
+    
+    $object = null;
+    switch (count($args))
+    {
+        case 0:
+            $object = new $class_name(); break;
+        case 1:
+            $object = new $class_name($args[0]); break;
+        case 2:
+            $object = new $class_name($args[0], $args[1]); break;
+        case 3:
+            $object = new $class_name($args[0], $args[1], $args[2]); break;
+        case 4:
+            $object = new $class_name($args[0], $args[1], $args[2], $args[3]); break;
+        case 5:
+            $object = new $class_name($args[0], $args[1], $args[2], $args[3], $args[4]); break;
+        case 6:
+            $object = new $class_name($args[0], $args[1], $args[2], $args[3], $args[4], $args[5]); break;
+        case 7:
+            $object = new $class_name($args[0], $args[1], $args[2], $args[3], $args[4], $args[5], $args[6]); break;
+    }
+	
+    return $object;
+}
+
+/**
+ * Singleton emulation
+ * 
+ * @example S('SomeClass', $param1, $param2)->objectMethod(); - create new instance of class SomeClass
+ * @example S('SomeClass')->objectMethod(); - return previously created object
+ * 
+ * @return object 
+ */
+function XS()
+{
+	global $__s;
+	
+	$args = func_get_args();
+    $class_name = $args[0];
+	
+    if (!array_key_exists($class_name, $__s))
+        $__s[$class_name] = call_user_func_array('XF', $args);
+
+    return $__s[$class_name];
+}
+
+/**
+ * Registry emulation
+ * 
+ * @example R('my-key', new SomeObject)->objectMethod();
+ * @example R('my-key')->objectMethod();
+ * 
+ * @param string $key   registry key for value
+ * @param mixed  $value [optional] value for key
+ * @return mixed        if not defined - current value, previously defined if key already exists 
+ */
+function XR($key, $value = null)
+{
+	global $__r;
+	
+	if (!array_key_exists($key, $__r))
+        $__r[$key] = $value;
+
+    return $__r[$key];
+}
+
+function __()
+{
+	$args = func_get_args();
+	$nargs = func_num_args();
+	$trace = debug_backtrace();
+	$caller = array_shift($trace);
+
+	$key = $caller['file'].':'.$caller['line'];
+
+	echo '<pre>', $key, "\n";
+	for ($i=0; $i<$nargs; $i++)
+		echo print_r($args[$i], 1), "\n";
+		
+	echo '</pre>';
 }
 
 /**
